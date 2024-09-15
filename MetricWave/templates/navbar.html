@@ -1,0 +1,23 @@
+<nav class="navbar navbar-expand-md sticky-top py-3 navbar-dark" id="mainNav">
+    <div class="container"><a class="navbar-brand d-flex align-items-center" href="/"><span
+            class="bs-icon-sm bs-icon-circle bs-icon-primary shadow d-flex justify-content-center align-items-center me-2 bs-icon"><svg
+            xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16"
+            class="bi bi-layout-wtf">
+                        <path d="M5 1v8H1V1zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1zm13 2v5H9V2zM9 1a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM5 13v2H3v-2zm-2-1a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1zm12-1v2H9v-2zm-6-1a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z"></path>
+                    </svg></span><span>MetricWave</span></a>
+        <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span
+                class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navcol-1">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/results">Results</a></li>
+                <li class="nav-item"></li>
+            </ul>
+            {% if session.get('logged_in') %}
+                <a class="btn btn-primary shadow" role="button" href="{{url_for('user.logout')}}">Log out</a>
+            {% else %}
+                <a class="btn btn-primary shadow" role="button" href="/signup">Sign up</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en" style="--bs-body-bg: #ffffff;--bs-body-color: #2d2d2d;">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Results</title>
+    <link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Inter:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&amp;display=swap">
+    <link rel="stylesheet" href="static/css/bs-theme-overrides.css">
+    <link rel="stylesheet" href="static/css/Footer-Dark-icons.css">
+    <link rel="stylesheet" href="static/css/Hero-Clean-Reverse-images.css">
+
+    <!-- Fixed table width -->
+    <style>
+        .fixed-width-table {
+            width: 100%;
+            max-width: 1200px; /* Set your desired fixed width here */
+            margin: auto;
+        }
+
+        .selected-criteria {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .selected-value {
+            display: block;
+            font-size: 2.5rem;
+            margin-top: 10px;
+        }
+        .table-rounded {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+{% include 'navbar.html' %}
+{% if session.get('logged_in') %}
+<section class="py-5">
+    <div class="toast-container"></div>
+    <h3 class="text-center">Select your criteria</h3>
+    <div class="container-fluid px-5">
+        <p style="color: var(--bs-form-valid-color); text-align: center;">
+            <strong>AFN:</strong> Choose from the available AFN options to filter the data accordingly.
+            <strong>DayType:</strong> Select the desired day type to view specific results based on daily conditions.
+        </p>
+    </div>
+
+    <!-- Form with dropdowns to select criteria -->
+    <form class="container-fluid px-5 mt-4" id="searchForm" method="POST" action="{{ url_for('result.search') }}">
+        <div class="row justify-content-center">
+            <div class="col-md-3 mb-3">
+                <select name="afn" class="form-select btn btn-primary" id="afn" >
+                    <option value="AFN01" {% if afn=="AFN01" %}selected{% endif %}>AFN01</option>
+                    <option value="AFN11" {% if afn=="AFN11" %}selected{% endif %}>AFN11</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select name="day_type" class="form-select btn btn-primary" id="day_type">
+                    <option value="2" {% if day_type=='2' %}selected{% endif %}>Variable</option>
+                    <option value="1" {% if day_type=='1' %}selected{% endif %}>Very Variable</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select name="model_type" class="form-select btn btn-primary" id="model_type">
+                    <option value="Gradient Boosting" {% if model_type=='Gradient Boosting
+                    ' %}selected{% endif %}>Gradient Boosting</option>
+                    <option value="kNN" {% if model_type=='kNN' %}selected{% endif %}>kNN</option>
+                    <option value="Linear Regression" {% if model_type=='Linear Regression
+                    ' %}selected{% endif %}>Linear Regression</option>
+                    <option value="Neural Network" {% if model_type=='Neural Network
+                    ' %}selected{% endif %}>Neural Network</option>
+                    <option value="Neural Network 100,100" {% if model_type=='Neural Network 100,100
+                    ' %}selected{% endif %}>Neural Network 100,100</option>
+                    <option value="Random Forest" {% if model_type=='Random Forest
+                    ' %}selected{% endif %}>Random Forest</option>
+                    <option value="Stack" {% if model_type=='Stack' %}selected{% endif %}>Stack</option>
+                    <option value="SVM" {% if model_type=='SVM' %}selected{% endif %}>SVM</option>
+                    <option value="Tree" {% if model_type=='Tree' %}selected{% endif %}>Tree</option>
+                </select>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+                <button class="btn btn-secondary w-100" type="submit" id="search">Search</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="contentToCapture">
+        <!-- Display Selected Values -->
+        <div class="container-fluid px-5 text-center" style="margin-bottom: 2%; margin-top: 2%">
+            {% if afn and model_type %}  <!-- Check if the data is present -->
+            <div class="row">
+                <div class="col-md-6 text-start text-bg-primary rounded">
+                    <h1>
+                        <p>{{ afn }}</p>
+                        <p>{{ model_type }}</p>
+                    </h1>
+                </div>
+                <div class="col-md-6 mb-4 text-end">
+                    <h1
+                            {% if mape_error_value<=20 %}
+                    class="text-success"
+                    {% elif mape_error_value >= 20 and mape_error_value < 30 %}
+                    class="text-warning"
+                    {% elif mape_error_value >= 30 and mape_error_value < 40 %}
+                    class="text-orange"
+                    {% else %}
+                    class="text-danger"
+                    {% endif %}>
+                    {{ error }}
+                    {{ mape_error_value|round(1) }}%</h1>
+                    <p>Mean Absolute Percentage Error</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Conditionally render graphs only if data is present -->
+        {% if barplot_image_url and scatterplot_image_url and residual_scatterplot_image_url %}
+        <div class="container-fluid px-5">
+            <div class="row">
+                <div class="col-md-6 mb-4 rounded-3">
+                    <div class="card">
+                        <img src="{{ barplot_image_url }}" alt="Bar Plot" class="card-img-top rounded-top-3">
+                        <div class="card-body">
+                            <p class="card-text">Bar Plot</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4 rounded-3">
+                    <div class="card">
+                        <img src="{{ scatterplot_image_url }}" alt="Scatter Plot" class="card-img-top rounded-top-3">
+                        <div class="card-body">
+                            <p class="card-text">Scatter Plot</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4 rounded-3">
+                    <div class="card">
+                        <img src="{{ correlation_heatmap_image_url }}" alt="Correlation Heatmap" class="card-img-top rounded-top-3">
+                        <div class="card-body">
+                            <p class="card-text">Correlation Heatmap</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4 rounded-3">
+                    <div class="card">
+                        <img src="{{ residual_scatterplot_image_url }}" alt="Residual Scatter Plot"
+                             class="card-img-top rounded-top-3">
+                        <div class="card-body">
+                            <p class="card-text">Residual Scatter Plot</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Display Global Errors in a Table with fixed width if data is available -->
+        <div class="container-fluid px-5 mt-5">
+            <h2 class="text-center">Global Errors</h2>
+            <div class="table-responsive">
+                <table id="resultsTable" class="table fixed-width-table table-rounded">
+                    <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Model Name</th>
+                        <th onclick="sortTable(1)" style="text-align: right;">MAE</th>
+                        <th onclick="sortTable(2)" style="text-align: right;">MAPE</th>
+                        <th onclick="sortTable(3)" style="text-align: right;">MSE</th>
+                        <th onclick="sortTable(4)" style="text-align: right;">R2</th>
+                        <th onclick="sortTable(5)" style="text-align: right;">RMSE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for error in global_errors %}
+                    <tr>
+                        <td>{{ error.model_name }}</td>
+                        <td style="text-align: right;">{{ error.mae }}</td>
+                        <td style="text-align: right;">{{ error.mape|round(3) }}</td>
+                        <td style="text-align: right;">{{ error.mse }}</td>
+                        <td style="text-align: right;">{{ error.r2|round(5) }}</td>
+                        <td style="text-align: right;">{{ error.rmse }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-secondary w-100 mt-5" id="downloadReportButton">Download Report</button>
+    {% else %}
+    <h1 class="text-center" style="margin-bottom: 10%; margin-top: 10%">Please select criteria and click Search to
+        display results.</h1>
+    {% endif %}
+
+</section>
+
+
+{% else %}
+<script type="text/javascript">
+    window.location.href = " {{ url_for('user.login') }} ";
+</script>
+{% endif %}
+{% include 'footer.html' %}
+<script src="static/bootstrap/js/bootstrap.min.js"></script>
+<script src="static/js/chart.min.js"></script>
+<script src="static/js/bs-init.js"></script>
+<script src="static/js/bold-and-dark.js"></script>
+<!--jsPDF and html2canvas libraries-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+
+    const download_report = document.getElementById('downloadReportButton');
+    download_report.addEventListener('click', function () {
+
+        const {jsPDF} = window.jspdf;
+
+        // Capturar el contenido del div 'contentToCapture' como canvas
+        html2canvas(document.getElementById("contentToCapture"), {
+            useCORS: true, // Permitir la carga de imágenes de otros dominios si CORS está habilitado
+            allowTaint: false, // No permitir imágenes sin CORS
+            scale: 2 // Aumenta la resolución de la captura
+        }).then(function (canvas) {
+            const imgData = canvas.toDataURL("image/png");
+
+            // Crear un PDF usando jsPDF
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: 'a4'
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save("Report.pdf");
+        }).catch(function (error) {
+            console.error("Error al capturar el contenido:", error);
+        });
+
+
+    });
+
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("resultsTable");
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                var xContent = parseFloat(x.innerHTML) || 0;
+                var yContent = parseFloat(y.innerHTML) || 0;
+                if (dir == "asc") {
+                    if (xContent > yContent) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (xContent < yContent) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+</body>
+</html>
